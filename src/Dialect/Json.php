@@ -55,6 +55,26 @@ trait Json
     private $showJsonAttributes = true;
 
     /**
+     * Decode JSON safely in PHP 8.1+.
+     * – If $value is a non‑empty string, delegate to $this->safeJsonDecode().
+     * – Otherwise return null (or an empty array when $assoc === true).
+     *
+     * @param mixed $value
+     * @param bool  $assoc  Whether to return associative array (same as json_decode $assoc)
+     *
+     * @return mixed|null
+     */
+    private function safeJsonDecode($value, bool $assoc = false)
+    {
+        if (is_string($value) && $value !== '') {
+            return $this->safeJsonDecode($value, $assoc);
+        }
+
+        // Preserve the caller’s expected type.
+        return $assoc ? [] : null;
+    }
+
+    /**
      * Create a new model instance that is existing.
      * Overrides parent to set Json columns.
      *
@@ -84,10 +104,10 @@ trait Json
             }
 
             if(array_key_exists($col, $this->attributes)) {
-                $obj = json_decode($this->attributes[$col]);
+                $obj = $this->safeJsonDecode($this->attributes[$col]);
             }
             else {
-                $obj = json_decode($this->$col);
+                $obj = $this->safeJsonDecode($this->$col);
             }
 
             if (is_object($obj)) {
@@ -113,11 +133,11 @@ trait Json
                 $this->hidden[] = $col;
             }
 
-            if (json_decode($structure) === null) {
+            if ($this->safeJsonDecode($structure) === null) {
                 throw new InvalidJsonException();
             }
 
-            $obj = json_decode($structure);
+            $obj = $this->safeJsonDecode($structure);
 
             if (is_object($obj)) {
                 foreach ($obj as $key => $value) {
@@ -140,7 +160,7 @@ trait Json
      */
     public function hintJsonStructure($column, $structure)
     {
-        if (json_decode($structure) === null) {
+        if ($this->safeJsonDecode($structure) === null) {
             throw new InvalidJsonException();
         }
 
@@ -231,7 +251,7 @@ trait Json
             // Get the content of the column associated with this JSON
             // attribute and parse it into an object
             $value = $this->{$this->jsonAttributes[$key]};
-            $obj = json_decode($this->{$this->jsonAttributes[$key]});
+            $obj = $this->safeJsonDecode($this->{$this->jsonAttributes[$key]});
 
             // Make sure we were able to parse the json. It's possible here
             // that we've only hinted at an attribute and the column that will
@@ -286,7 +306,7 @@ trait Json
     public function setJsonAttribute($attribute, $key, $value)
     {
         // Pull the attribute and decode it
-        $decoded = json_decode($this->{$attribute});
+        $decoded = $this->safeJsonDecode($this->{$attribute});
 
         switch (gettype($decoded)) {
             // It's possible the attribute doesn't exist yet (since we can hint at
@@ -327,7 +347,7 @@ trait Json
         }
 
         foreach (array_unique($this->jsonAttributes) as $attribute) {
-            $originals[$attribute] = json_decode(array_get($this->original, $attribute, 'null'), true);
+            $originals[$attribute] = $this->safeJsonDecode(array_get($this->original, $attribute, 'null'), true);
         }
 
         foreach ($this->jsonAttributes as $jsonAttribute => $jsonColumn) {

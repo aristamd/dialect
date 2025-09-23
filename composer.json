@@ -1,5 +1,5 @@
 {
-    "name": "darrylkuhn/dialect",
+    "name": "aristamd/dialect",
     "description": "Provides JSON datatype support for the Eloquent ORM",
     "keywords": ["laravel","illuminate","eloquent","json","schemaless","schema-free"],
     "license": "MIT",

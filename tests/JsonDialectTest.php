@@ -1,6 +1,10 @@
 <?php
 
-class JsonDialectTest extends PHPUnit_Framework_TestCase
+namespace Tests;
+
+use PHPUnit\Framework\TestCase;
+
+class JsonDialectTest extends TestCase
 {
     /**
      * Assert that defined JSON attributes are properly parsed and exposed through
@@ -64,11 +68,11 @@ class JsonDialectTest extends PHPUnit_Framework_TestCase
     /**
      * Assert that an exception is thrown when given invalid json as a
      * structure hint
-     *
-     * @expectedException Eloquent\Dialect\InvalidJsonException
      */
     public function testInvalidJsonAttribute()
     {
+        $this->expectException(\Eloquent\Dialect\InvalidJsonException::class);
+
         // Mock the model with data
         $mock = new MockJsonDialectModel;
         $mock->hintJsonStructure( 'testColumn', json_encode(['foo'=>null]) );
@@ -205,11 +209,11 @@ class JsonDialectTest extends PHPUnit_Framework_TestCase
     /**
      * Assert that an exception is thrown when given invalid json as a
      * structure hint
-     *
-     * @expectedException Eloquent\Dialect\InvalidJsonException
      */
     public function testInvalidHint()
     {
+        $this->expectException(\Eloquent\Dialect\InvalidJsonException::class);
+
         // Mock the model with data
         $mock = new MockJsonDialectModel;
         $mock->hintJsonStructure( 'testColumn', '{' );

@@ -230,6 +230,7 @@ trait Json
     {
         $jsonPattern = '/'.implode('|', array_map('preg_quote', self::$jsonOperators)).'/';
 
+        // Test for JSON operators and reduce to end element
         $containsJsonOperator = false;
 
         if (preg_match($jsonPattern, $key)) {
@@ -242,13 +243,25 @@ trait Json
 
         if (!parent::hasGetMutator($key) && array_key_exists($key, $this->jsonAttributes) != false) {
 
+            // Get the content of the column associated with this JSON
+            // attribute and parse it into an object
             $value = $this->{$this->jsonAttributes[$key]};
             $obj = $this->safeJsonDecode($this->{$this->jsonAttributes[$key]});
 
+            // Make sure we were able to parse the json. It's possible here
+            // that we've only hinted at an attribute and the column that will
+            // hold that attribute is actually null. This isn't really a parse
+            // error though the json_encode method will return null (just like)
+            // a parse error. To distinguish the two states see if the original
+            // value was null (indicating there was nothing there to parse in
+            // the first place)
             if ( !($value === 'null' || $value === null) && $obj === null ) {
                 throw new InvalidJsonException();
             }
 
+            // Again it's possible the key will be in the jsonAttributes array
+            // (having been hinted) but not present on the actual record.
+            // Therefore test that the key is set before returning.
             if (isset($obj->$key)) {
                 return $obj->$key;
             } else {
@@ -287,9 +300,13 @@ trait Json
      */
     public function setJsonAttribute($attribute, $key, $value)
     {
+        // Pull the attribute and decode it
         $decoded = $this->safeJsonDecode($this->{$attribute});
 
         switch (gettype($decoded)) {
+            // It's possible the attribute doesn't exist yet (since we can hint at
+            // structure). In that case we build an object to set values on as a
+            // starting point
             case 'NULL':
                 $decoded = json_decode('{}');
                 $decoded->$key = $value;

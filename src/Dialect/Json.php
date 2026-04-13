@@ -191,15 +191,11 @@ trait Json
      */
     public function hasGetMutator($key)
     {
-        $jsonPattern = '/'.implode('|', self::$jsonOperators).'/';
+        $jsonPattern = '/'.implode('|', array_map('preg_quote', self::$jsonOperators)).'/';
 
         if (array_key_exists($key, $this->jsonAttributes) !== false) {
             return true;
-        } // In some cases the key specified may not be a simple key but rather a
-        // JSON expression (e.g. "jsonField->'some_key'). A common case would
-        // be when specifying a relation key. As such we test for JSON
-        // operators and expect a mutator if this is a JSON expression
-        elseif (preg_match($jsonPattern, $key) != false) {
+        } elseif (preg_match($jsonPattern, $key) != false) {
             return true;
         }
 
@@ -232,7 +228,7 @@ trait Json
      */
     protected function mutateAttribute($key, $value)
     {
-        $jsonPattern = '/'.implode('|', self::$jsonOperators).'/';
+        $jsonPattern = '/'.implode('|', array_map('preg_quote', self::$jsonOperators)).'/';
 
         // Test for JSON operators and reduce to end element
         $containsJsonOperator = false;
@@ -269,10 +265,10 @@ trait Json
             if (isset($obj->$key)) {
                 return $obj->$key;
             } else {
-                return;
+                return null;
             }
         } elseif ($containsJsonOperator) {
-            return;
+            return null;
         }
 
         return parent::mutateAttribute($key, $value);
@@ -346,12 +342,12 @@ trait Json
         }
 
         foreach (array_unique($this->jsonAttributes) as $attribute) {
-            $originals[$attribute] = $this->safeJsonDecode(array_get($this->original, $attribute, 'null'), true);
+            $originals[$attribute] = $this->safeJsonDecode(data_get($this->original, $attribute, 'null'), true);
         }
 
         foreach ($this->jsonAttributes as $jsonAttribute => $jsonColumn) {
             if ($this->$jsonAttribute !== null &&
-                $this->$jsonAttribute !== array_get($originals[$jsonColumn], $jsonAttribute)) {
+                $this->$jsonAttribute !== data_get($originals[$jsonColumn], $jsonAttribute)) {
                 $dirty[$jsonAttribute] = json_encode($this->$jsonAttribute);
             }
         }

@@ -1,18 +1,16 @@
 <?php
 
-class MockJsonDialectModel extends Illuminate\Database\Eloquent\Model
+namespace Tests;
+
+use Illuminate\Database\Eloquent\Model;
+
+class MockJsonDialectModel extends Model
 {
     use \Eloquent\Dialect\Json;
 
     protected $jsonColumns;
 
-    public function __construct(array $attributes = array())
-    {
-        static::$booted[get_class($this)] = true;
-        parent::__construct($attributes);
-    }
-
-    public function setJsonColumns(Array $columns)
+    public function setJsonColumns(array $columns)
     {
         $this->jsonColumns = $columns;
     }
